@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>우리들의 독서캘린더</title>
+    <style>
+        :root {
+            --primary-color: #6b8e23;
+            --secondary-color: #f0f4e6;
+            --text-color: #333;
+            --border-color: #ddd;
+        }
+        
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: #f9f9f9;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 20px 0;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        h1 {
+            margin: 0;
+        }
+        
+        /* 탭 메뉴 스타일 */
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            background-color: #f1f1f1;
+            border: 1px solid var(--border-color);
+            border-bottom: none;
+            margin-right: 5px;
+            border-radius: 5px 5px 0 0;
+        }
+        
+        .tab.active {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        /* 콘텐츠 영역 */
+        .content {
+            display: none;
+            padding: 20px;
+            border: 1px solid var(--border-color);
+            border-top: none;
+            background-color: white;
+        }
+        
+        .content.active {
+            display: block;
+        }
+        
+        /* 캘린더 스타일 */
+        .calendar {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 10px;
+        }
+        
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .weekday {
+            text-align: center;
+            font-weight: bold;
+            padding: 10px;
+            background-color: var(--secondary-color);
+        }
+        
+        .day {
+            height: 100px;
+            border: 1px solid var(--border-color);
+            padding: 10px;
+            vertical-align: top;
+            position: relative;
+        }
+        
+        .day-number {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .day.today {
+            background-color: #f0f8ff;
+        }
+        
+        .day.has-book {
+            background-color: rgba(107, 142, 35, 0.1);
+        }
+        
+        .book-entry {
+            font-size: 12px;
+            margin-bottom: 5px;
+            padding: 3px;
+            background-color: var(--secondary-color);
+            border-radius: 3px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        /* 책 추가 폼 스타일 */
+        .book-form {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        input, textarea, select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-family: inherit;
+        }
+        
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        button:hover {
+            opacity: 0.9;
+        }
+        
+        /* 책 목록 스타일 */
+        .book-list {
+            margin-top: 20px;
+        }
+        
+        .book-item {
+            padding: 15px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 15px;
+            border-radius: 4px;
+            background-color: white;
+        }
+        
+        .book-title {
+            font-weight: bold;
+            font-size: 18px;
+            margin-bottom: 5px;
+        }
+        
+        .book-author {
+            color: #666;
+            margin-bottom: 10px;
+        }
+        
+        .book-dates {
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .book-status {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-size: 12px;
+            margin-top: 10px;
+        }
+        
+        .status-reading {
+            background-color: #ffe0b2;
+            color: #e65100;
+        }
+        
+        .status-completed {
+            background-color: #c8e6c9;
+            color: #2e7d32;
+        }
+        
+        /* 통계 스타일 */
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+        }
+        
+        .stat-card {
+            background-color: white;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: 36px;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>우리들의 독서캘린더</h1>
+        </div>
+    </header>
+    
+    <div class="container">
+        <div class="tabs">
+            <div class="tab active" data-tab="calendar">캘린더</div>
+            <div class="tab" data-tab="books">내 책목록</div>
+            <div class="tab" data-tab="add-book">책 추가하기</div>
+            <div class="tab" data-tab="stats">통계</div>
+        </div>
+        
+        <div class="content active" id="calendar">
+            <div class="calendar-header">
+                <button id="prev-month">&lt; 이전달</button>
+                <h2 id="current-month">2025년 3월</h2>
+                <button id="next-month">다음달 &gt;</button>
+            </div>
+            
+            <div class="calendar">
+                <div class="weekday">일</div>
+                <div class="weekday">월</div>
+                <div class="weekday">화</div>
+                <div class="weekday">수</div>
+                <div class="weekday">목</div>
+                <div class="weekday">금</div>
+                <div class="weekday">토</div>
+                
+                <!-- 여기에 JavaScript로 날짜가 채워집니다 -->
+            </div>
+        </div>
+        
+        <div class="content" id="books">
+            <h2>내 책목록</h2>
+            <div class="book-list">
+                <!-- 여기에 JavaScript로 책 목록이 추가됩니다 -->
+            </div>
+        </div>
+        
+        <div class="content" id="add-book">
+            <h2>새 책 추가하기</h2>
+            <div class="book-form">
+                <div class="form-group">
+                    <label for="title">책 제목</label>
+                    <input type="text" id="title" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="author">작가</label>
+                    <input type="text" id="author" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="start-date">시작 날짜</label>
+                    <input type="date" id="start-date" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="end-date">완독 날짜 (선택사항)</label>
+                    <input type="date" id="end-date">
+                </div>
+                
+                <div class="form-group">
+                    <label for="pages">총 페이지 수</label>
+                    <input type="number" id="pages" min="1">
+                </div>
+                
+                <div class="form-group">
+                    <label for="notes">메모</label>
+                    <textarea id="notes" rows="3"></textarea>
+                </div>
+                
+                <button id="save-book">저장하기</button>
+            </div>
+        </div>
+        
+        <div class="content" id="stats">
+            <h2>나의 독서 통계</h2>
+            <div class="stats-container">
+                <div class="stat-card">
+                    <h3>총 읽은 책</h3>
+                    <div class="stat-number" id="total-books">0</div>
+                </div>
+                
+                <div class="stat-card">
+                    <h3>올해 읽은 책</h3>
+                    <div class="stat-number" id="books-this-year">0</div>
+                </div>
+                
+                <div class="stat-card">
+                    <h3>읽는 중인 책</h3>
+                    <div class="stat-number" id="books-in-progress">0</div>
+                </div>
+                
+                <div class="stat-card">
+                    <h3>총 읽은 페이지</h3>
+                    <div class="stat-number" id="total-pages">0</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // 현재 활성화된 탭을 관리하는 함수
+        function setupTabs() {
+            const tabs = document.querySelectorAll('.tab');
+            const contents = document.querySelectorAll('.content');
+            
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const tabId = tab.getAttribute('data-tab');
+                    
+                    // 모든 탭과 콘텐츠 비활성화
+                    tabs.forEach(t => t.classList.remove('active'));
+                    contents.forEach(c => c.classList.remove('active'));
+                    
+                    // 선택한 탭과 콘텐츠 활성화
+                    tab.classList.add('active');
+                    document.getElementById(tabId).classList.add('active');
+                });
+            });
+        }
+        
+        // 독서 데이터를 로컬 스토리지에서 관리
+        class BookManager {
+            constructor() {
+                this.books = JSON.parse(localStorage.getItem('books') || '[]');
+                this.saveToStorage();
+            }
+            
+            saveToStorage() {
+                localStorage.setItem('books', JSON.stringify(this.books));
+            }
+            
+            addBook(book) {
+                this.books.push({
+                    id: Date.now(), // 고유 ID 생성
+                    ...book,
+                    addedDate: new Date().toISOString()
+                });
+                this.saveToStorage();
+                return this.books;
+            }
+            
+            getBooks() {
+                return this.books;
+            }
+            
+            getCompletedBooks() {
+                return this.books.filter(book => book.endDate);
+            }
+            
+            getBooksInProgress() {
+                return this.books.filter(book => !book.endDate);
+            }
+            
+            getBooksForDate(date) {
+                return this.books.filter(book => {
+                    const startDate = new Date(book.startDate);
+                    const endDate = book.endDate ? new Date(book.endDate) : null;
+                    
+                    // 날짜 포맷을 YYYY-MM-DD로 변환하여 비교
+                    const formatDate = d => d.toISOString().split('T')[0];
+                    const targetDate = formatDate(new Date(date));
+                    
+                    // 시작일이 타겟 날짜와 같거나 완독일이 타겟 날짜와 같은 경우
+                    if (formatDate(startDate) === targetDate) return true;
+                    if (endDate && formatDate(endDate) === targetDate) return true;
+                    
+                    // 시작일과 완독일 사이에 타겟 날짜가 있는 경우
+                    if (endDate && startDate <= date && endDate >= date) return true;
+                    
+                    return false;
+                });
+            }
+            
+            getTotalPages() {
+                return this.getCompletedBooks().reduce((total, book) => total + (parseInt(book.pages) || 0), 0);
+            }
+            
+            getBooksThisYear() {
+                const currentYear = new Date().getFullYear();
+                return this.books.filter(book => {
+                    const startDate = new Date(book.startDate);
+                    return startDate.getFullYear() === currentYear;
+                });
+            }
+        }
+        
+        // 캘린더 렌더링 관리
+        class Calendar {
+            constructor(bookManager) {
+                this.bookManager = bookManager;
+                this.currentDate = new Date();
+                this.calendarEl = document.querySelector('.calendar');
+                this.monthEl = document.getElementById('current-month');
+                this.prevBtn = document.getElementById('prev-month');
+                this.nextBtn = document.getElementById('next-month');
+                
+                this.setupNavigation();
+                this.render();
+            }
+            
+            setupNavigation() {
+                this.prevBtn.addEventListener('click', () => {
+                    this.currentDate.setMonth(this.currentDate.getMonth() - 1);
+                    this.render();
+                });
+                
+                this.nextBtn.addEventListener('click', () => {
+                    this.currentDate.setMonth(this.currentDate.getMonth() + 1);
+                    this.render();
+                });
+            }
+            
+            render() {
+                const year = this.currentDate.getFullYear();
+                const month = this.currentDate.getMonth();
+                
+                // 월 표시 업데이트
+                this.monthEl.textContent = `${year}년 ${month + 1}월`;
+                
+                // 달력 날짜 계산
+                const firstDay = new Date(year, month, 1);
+                const lastDay = new Date(year, month + 1, 0);
+                const daysInMonth = lastDay.getDate();
+                const startingDay = firstDay.getDay(); // 0 = 일요일, 6 = 토요일
+                
+                // 달력 초기화
+                this.calendarEl.innerHTML = '';
+                
+                // 요일 헤더 추가
+                const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
+                weekdays.forEach(day => {
+                    const dayEl = document.createElement('div');
+                    dayEl.className = 'weekday';
+                    dayEl.textContent = day;
+                    this.calendarEl.appendChild(dayEl);
+                });
+                
+                // 이전 달의 마지막 날짜들 (빈칸)
+                for (let i = 0; i < startingDay; i++) {
+                    const dayEl = document.createElement('div');
+                    dayEl.className = 'day empty';
+                    this.calendarEl.appendChild(dayEl);
+                }
+                
+                // 현재 달의 날짜들
+                const today = new Date();
+                for (let i = 1; i <= daysInMonth; i++) {
+                    const date = new Date(year, month, i);
+                    const dayEl = document.createElement('div');
+                    dayEl.className = 'day';
+                    
+                    // 오늘 날짜 하이라이트
+                    if (date.toDateString() === today.toDateString()) {
+                        dayEl.classList.add('today');
+                    }
+                    
+                    // 날짜 번호
+                    const dayNumber = document.createElement('div');
+                    dayNumber.className = 'day-number';
+                    dayNumber.textContent = i;
+                    dayEl.appendChild(dayNumber);
+                    
+                    // 해당 날짜의 책 가져오기
+                    const booksOnDate = this.bookManager.getBooksForDate(date);
+                    if (booksOnDate.length > 0) {
+                        dayEl.classList.add('has-book');
+                        
+                        // 최대 3권까지만 표시
+                        booksOnDate.slice(0, 3).forEach(book => {
+                            const bookEl = document.createElement('div');
+                            bookEl.className = 'book-entry';
+                            bookEl.textContent = book.title;
+                            dayEl.appendChild(bookEl);
+                        });
+                        
+                        // 3권 이상이면 더보기 표시
+                        if (booksOnDate.length > 3) {
+                            const moreEl = document.createElement('div');
+                            moreEl.className = 'book-entry more';
+                            moreEl.textContent = `+ ${booksOnDate.length - 3}권 더...`;
+                            dayEl.appendChild(moreEl);
+                        }
+                    }
+                    
+                    this.calendarEl.appendChild(dayEl);
+                }
+            }
+        }
+        
+        // 책 목록 렌더링
+        class BookList {
+            constructor(bookManager) {
+                this.bookManager = bookManager;
+                this.listEl = document.querySelector('.book-list');
+                this.render();
+            }
+            
+            render() {
+                this.listEl.innerHTML = '';
+                const books = this.bookManager.getBooks();
+                
+                if (books.length === 0) {
+                    this.listEl.innerHTML = '<p>아직 등록된 책이 없습니다. 책을 추가해보세요!</p>';
+                    return;
+                }
+                
+                books.sort((a, b) => new Date(b.startDate) - new Date(a.startDate))
+                    .forEach(book => {
+                        const bookEl = document.createElement('div');
+                        bookEl.className = 'book-item';
+                        
+                        const isCompleted = book.endDate ? true : false;
+                        
+                        bookEl.innerHTML = `
+                            <div class="book-title">${book.title}</div>
+                            <div class="book-author">${book.author}</div>
+                            <div class="book-dates">
+                                시작일: ${new Date(book.startDate).toLocaleDateString()}
+                                ${isCompleted ? `<br>완독일: ${new Date(book.endDate).toLocaleDateString()}` : ''}
+                            </div>
+                            ${book.pages ? `<div class="book-pages">페이지: ${book.pages}</div>` : ''}
+                            ${book.notes ? `<div class="book-notes">메모: ${book.notes}</div>` : ''}
+                            <div class="book-status ${isCompleted ? 'status-completed' : 'status-reading'}">
+                                ${isCompleted ? '완독' : '읽는 중'}
+                            </div>
+                        `;
+                        
+                        this.listEl.appendChild(bookEl);
+                    });
+            }
+        }
+        
+        // 통계 관리
+        class Stats {
+            constructor(bookManager) {
+                this.bookManager = bookManager;
+                this.totalBooksEl = document.getElementById('total-books');
+                this.booksThisYearEl = document.getElementById('books-this-year');
+                this.booksInProgressEl = document.getElementById('books-in-progress');
+                this.totalPagesEl = document.getElementById('total-pages');
+                this.render();
+            }
+            
+            render() {
+                this.totalBooksEl.textContent = this.bookManager.getCompletedBooks().length;
+                this.booksThisYearEl.textContent = this.bookManager.getBooksThisYear().length;
+                this.booksInProgressEl.textContent = this.bookManager.getBooksInProgress().length;
+                this.totalPagesEl.textContent = this.bookManager.getTotalPages();
+            }
+        }
+        
+        // 책 추가 폼 관리
+        class BookForm {
+            constructor(bookManager, calendar, bookList, stats) {
+                this.bookManager = bookManager;
+                this.calendar = calendar;
+                this.bookList = bookList;
+                this.stats = stats;
+                
+                this.titleEl = document.getElementById('title');
+                this.authorEl = document.getElementById('author');
+                this.startDateEl = document.getElementById('start-date');
+                this.endDateEl = document.getElementById('end-date');
+                this.pagesEl = document.getElementById('pages');
+                this.notesEl = document.getElementById('notes');
+                this.saveBtn = document.getElementById('save-book');
+                
+                // 기본 시작일을 오늘로 설정
+                this.startDateEl.valueAsDate = new Date();
+                
+                this.setupEvents();
+            }
+            
+            setupEvents() {
+                this.saveBtn.addEventListener('click', () => {
+                    if (!this.titleEl.value || !this.authorEl.value || !this.startDateEl.value) {
+                        alert('제목, 작가, 시작 날짜는 필수입니다.');
+                        return;
+                    }
+                    
+                    const book = {
+                        title: this.titleEl.value,
+                        author: this.authorEl.value,
+                        startDate: this.startDateEl.value,
+                        endDate: this.endDateEl.value || null,
+                        pages: this.pagesEl.value ? parseInt(this.pagesEl.value) : null,
+                        notes: this.notesEl.value
+                    };
+                    
+                    this.bookManager.addBook(book);
+                    
+                    // UI 업데이트
+                    this.calendar.render();
+                    this.bookList.render();
+                    this.stats.render();
+                    
+                    // 폼 초기화
+                    this.titleEl.value = '';
+                    this.authorEl.value = '';
+                    this.startDateEl.valueAsDate = new Date();
+                    this.endDateEl.value = '';
+                    this.pagesEl.value = '';
+                    this.notesEl.value = '';
+                    
+                    // 책 목록 탭으로 이동
+                    const bookTab = document.querySelector('[data-tab="books"]');
+                    bookTab.click();
+                });
+            }
+        }
+        
+        // 앱 초기화
+        document.addEventListener('DOMContentLoaded', () => {
+            setupTabs();
+            
+            const bookManager = new BookManager();
+            const calendar = new Calendar(bookManager);
+            const bookList = new BookList(bookManager);
+            const stats = new Stats(bookManager);
+            new BookForm(bookManager, calendar, bookList, stats);
+        });
+    </script>
+    
+    <!-- Google Fonts - Noto Sans KR -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+</body>
+</html>
